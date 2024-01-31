@@ -11,7 +11,8 @@ type UIManager struct {
 }
 
 type UIConfig struct {
-	ObjectType string
+	Object    string
+	Namespace string
 }
 
 func NewUIManager(kubeClient *kube.KubeClient, config UIConfig) *UIManager {
@@ -25,25 +26,17 @@ func NewUIManager(kubeClient *kube.KubeClient, config UIConfig) *UIManager {
 func (u *UIManager) Start() {
 	fmt.Println("Welcome to the Kubernetes Interactive Browser")
 
-	var objectType string
-	if u.config.ObjectType == "" {
-		// Ask the user for the object type if it's not already specified
-		fmt.Print("Enter the Kubernetes object type you want to browse: ")
-		fmt.Scanln(&objectType)
-	} else {
-		// Use the provided object type
-		objectType = u.config.ObjectType
-	}
-
 	// Fetch the object schema
-	_, err := u.kubeClient.FetchObjectSchema(objectType)
+	api, err := u.kubeClient.FetchObjectSchema(u.config.Object)
 	if err != nil {
 		fmt.Printf("Error fetching schema: %v\n", err)
 		return
 	}
 
-	// Use the schema for further interactions
-	// ...
+	list, err := u.kubeClient.ListObjects(api, u.config.Namespace)
+	for _, item := range list.Items {
+		fmt.Println(item.GetName())
+	}
 }
 
 // RenderMainMenu displays the main menu options to the user
